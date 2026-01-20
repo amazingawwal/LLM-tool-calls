@@ -74,12 +74,12 @@ function getFlightSchedule(origin, destination) {
   };
 }
 
-function getHotelBooking(city, numNights) {
-  /**
-   * Get hotel booking information and pricing for a city.
-   * Returns hotel details with pricing in USD.
-   */
-  const hotelDatabase = {
+
+// HOTEL BOOKING FUNCTION
+
+function getHotelBooking(city, numOfNights) {
+ 
+  const hotelData = {
     'Nairobi': {
       city: 'Nairobi',
       hotel_name: 'Nairobi Serena Hotel',
@@ -100,32 +100,29 @@ function getHotelBooking(city, numNights) {
 
   // Normalize city name
   city = city.trim().replace(/\b\w/g, c => c.toUpperCase());
-  numNights = parseInt(numNights);
+  numOfNights = parseInt(numOfNights);
 
   // Look up hotel
-  if (hotelDatabase[city]) {
-    const hotelInfo = { ...hotelDatabase[city] };
-    hotelInfo.num_nights = numNights;
-    hotelInfo.total_price_usd = hotelInfo.price_per_night_usd * numNights;
+  if (hotelData[city]) {
+    const hotelInfo = { ...hotelData[city] };
+    hotelInfo.num_nights = numOfNights;
+    hotelInfo.total_price_usd = hotelInfo.price_per_night_usd * numOfNights;
     return hotelInfo;
   }
 
   // Return generic data if city not found
   return {
     city,
-    num_nights: numNights,
+    num_nights: numOfNights,
     price_per_night_usd: 100.00,
-    total_price_usd: 100.00 * numNights,
+    total_price_usd: 100.00 * numOfNights,
     currency: 'USD',
     note: 'Generic pricing - city not in database'
   };
 }
 
 function convertCurrency(amount, fromCurrency, toCurrency) {
-  /**
-   * Convert amount from one currency to another.
-   * Returns converted amount.
-   */
+
   const exchangeRates = {
     'USD': 1.0,
     'EUR': 0.92,
@@ -165,8 +162,80 @@ function convertCurrency(amount, fromCurrency, toCurrency) {
 }
 
 // Map function names to implementations
-const availableFunctions = {
+const availableFunction = {
   get_flight_schedule: getFlightSchedule,
   get_hotel_booking: getHotelBooking,
   convert_currency: convertCurrency
 };
+
+// OpenAPI TOOLS
+
+const openaiTools = [
+  {
+    type: 'function',
+    function: {
+      name: 'get_flight_schedule',
+      description: 'Get flight schedule and pricing between two cities. Returns flight details including total flight time and pricing in USD.',
+      parameters: {
+        type: 'object',
+        properties: {
+          origin: {
+            type: 'string',
+            description: "Origin city name (e.g., 'Lagos', 'New York')"
+          },
+          destination: {
+            type: 'string',
+            description: "Destination city name (e.g., 'Nairobi', 'London')"
+          }
+        },
+        required: ['origin', 'destination']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_hotel_booking',
+      description: 'Get hotel booking information and pricing for a city. Returns hotel details with pricing in USD.',
+      parameters: {
+        type: 'object',
+        properties: {
+          city: {
+            type: 'string',
+            description: "City name where hotel is needed (e.g., 'Nairobi', 'London')"
+          },
+          num_nights: {
+            type: 'integer',
+            description: 'Number of nights to stay'
+          }
+        },
+        required: ['city', 'num_nights']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'convert_currency',
+      description: 'Convert an amount from one currency to another. Supports USD, EUR, GBP, NGN (Nigerian Naira), KES (Kenyan Shilling), JPY, CAD, AUD.',
+      parameters: {
+        type: 'object',
+        properties: {
+          amount: {
+            type: 'number',
+            description: 'Amount to convert'
+          },
+          from_currency: {
+            type: 'string',
+            description: "Source currency code (e.g., 'USD', 'EUR', 'NGN')"
+          },
+          to_currency: {
+            type: 'string',
+            description: "Target currency code (e.g., 'USD', 'EUR', 'KES')"
+          }
+        },
+        required: ['amount', 'from_currency', 'to_currency']
+      }
+    }
+  }
+];

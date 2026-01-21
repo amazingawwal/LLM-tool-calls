@@ -6,6 +6,8 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 const LLM_MODEL_NAME = process.env.LLM_MODEL_NAME
 
+
+// FLIGHT SCHEDULE FUNCTION
 function getFlightSchedule(origin, destination) {
   
   const flightDatabase = {
@@ -53,17 +55,17 @@ function getFlightSchedule(origin, destination) {
     }
   };
 
-  // Normalize city names
+  
   origin = origin.trim().replace(/\b\w/g, c => c.toUpperCase());
   destination = destination.trim().replace(/\b\w/g, c => c.toUpperCase());
 
-  // Look up flight
+
   const flightKey = `${origin}-${destination}`;
   if (flightDatabase[flightKey]) {
     return flightDatabase[flightKey];
   }
 
-  // Return generic data if route not found
+ 
   return {
     origin,
     destination,
@@ -76,7 +78,6 @@ function getFlightSchedule(origin, destination) {
 
 
 // HOTEL BOOKING FUNCTION
-
 function getHotelBooking(city, numOfNights) {
  
   const hotelData = {
@@ -98,11 +99,10 @@ function getHotelBooking(city, numOfNights) {
     }
   };
 
-  // Normalize city name
   city = city.trim().replace(/\b\w/g, c => c.toUpperCase());
   numOfNights = parseInt(numOfNights);
 
-  // Look up hotel
+  
   if (hotelData[city]) {
     const hotelInfo = { ...hotelData[city] };
     hotelInfo.num_nights = numOfNights;
@@ -110,7 +110,7 @@ function getHotelBooking(city, numOfNights) {
     return hotelInfo;
   }
 
-  // Return generic data if city not found
+  
   return {
     city,
     num_nights: numOfNights,
@@ -121,20 +121,22 @@ function getHotelBooking(city, numOfNights) {
   };
 }
 
+
+// CURRENCY CONVERSION FUNCTION
 function convertCurrency(amount, fromCurrency, toCurrency) {
 
   const exchangeRates = {
     'USD': 1.0,
     'EUR': 0.92,
     'GBP': 0.79,
-    'NGN': 1580.0,  // Nigerian Naira
-    'KES': 129.0,   // Kenyan Shilling
+    'NGN': 1580.0,  
+    'KES': 129.0, 
     'JPY': 149.0,
     'CAD': 1.36,
     'AUD': 1.52
   };
 
-  // Normalize currency codes
+  
   fromCurrency = fromCurrency.trim().toUpperCase();
   toCurrency = toCurrency.trim().toUpperCase();
   amount = parseFloat(amount);
@@ -148,7 +150,7 @@ function convertCurrency(amount, fromCurrency, toCurrency) {
     };
   }
 
-  // Convert to USD first, then to target currency
+  
   const amountInUsd = amount / exchangeRates[fromCurrency];
   const convertedAmount = amountInUsd * exchangeRates[toCurrency];
 
@@ -161,7 +163,7 @@ function convertCurrency(amount, fromCurrency, toCurrency) {
   };
 }
 
-// Map function names to implementations
+// Adding function names to implementations
 const availableFunctions = {
   get_flight_schedule: getFlightSchedule,
   get_hotel_booking: getHotelBooking,
@@ -169,7 +171,6 @@ const availableFunctions = {
 };
 
 // OpenAI TOOLS
-
 const openaiTools = [
   {
     type: 'function',
@@ -268,27 +269,27 @@ async function runWithOpenAI() {
 
     const assistantMessage = response.choices[0].message;
 
-    // Check if we're done
+    
     if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
-      // No more tool calls, return final response
+     
       const finalResponse = assistantMessage.content;
       console.log(finalResponse);
       return;
     }
 
-    // Add assistant message to conversation
+    
     messages.push({
       role: 'assistant',
       content: assistantMessage.content,
       tool_calls: assistantMessage.tool_calls
     });
 
-    // Process each tool call
+  
     for (const toolCall of assistantMessage.tool_calls) {
       const functionName = toolCall.function.name;
       const functionArgs = JSON.parse(toolCall.function.arguments);
 
-      // Execute the function
+      
       let functionResponse;
       if (availableFunctions[functionName]) {
         functionResponse = availableFunctions[functionName](...Object.values(functionArgs));
@@ -296,7 +297,7 @@ async function runWithOpenAI() {
         functionResponse = { error: `Unknown function: ${functionName}` };
       }
 
-      // Add tool response to conversation
+      
       messages.push({
         role: 'tool',
         tool_call_id: toolCall.id,
@@ -310,11 +311,11 @@ async function runWithOpenAI() {
 
 
 async function main() {
-  try {
-    await runWithOpenAI();
-} catch (error) {
-    console.error('Error:', error.message);
-}
+    try {
+        await runWithOpenAI();
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
 }
 
 main();

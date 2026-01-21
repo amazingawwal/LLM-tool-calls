@@ -162,13 +162,13 @@ function convertCurrency(amount, fromCurrency, toCurrency) {
 }
 
 // Map function names to implementations
-const availableFunction = {
+const availableFunctions = {
   get_flight_schedule: getFlightSchedule,
   get_hotel_booking: getHotelBooking,
   convert_currency: convertCurrency
 };
 
-// OpenAPI TOOLS
+// OpenAI TOOLS
 
 const openaiTools = [
   {
@@ -239,3 +239,82 @@ const openaiTools = [
     }
   }
 ];
+
+
+// OpenAI Implementation
+
+async function runWithOpenAI() {
+  const client = new OpenAI({
+    apiKey: OPENROUTER_API_KEY,
+    baseURL: 'https://openrouter.ai/api/v1'
+  });
+
+  const userPrompt = "I'm taking a flight from Lagos to Nairobi for a conference. I would like to know the total flight time back and forth, and the total cost of logistics for this conference if I'm staying for three days.";
+
+  const messages = [{ role: 'user', content: userPrompt }];
+
+  const maxIterations = 10;
+  let iteration = 0;
+
+  while (iteration < maxIterations) {
+    iteration++;
+
+    const response = await client.chat.completions.create({
+      model: LLM_MODEL_NAME,
+      messages: messages,
+      tools: openaiTools,
+      tool_choice: 'auto'
+    });
+
+    const assistantMessage = response.choices[0].message;
+
+    // Check if we're done
+    if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
+      // No more tool calls, return final response
+      const finalResponse = assistantMessage.content;
+      console.log(finalResponse);
+      return;
+    }
+
+    // Add assistant message to conversation
+    messages.push({
+      role: 'assistant',
+      content: assistantMessage.content,
+      tool_calls: assistantMessage.tool_calls
+    });
+
+    // Process each tool call
+    for (const toolCall of assistantMessage.tool_calls) {
+      const functionName = toolCall.function.name;
+      const functionArgs = JSON.parse(toolCall.function.arguments);
+
+      // Execute the function
+      let functionResponse;
+      if (availableFunctions[functionName]) {
+        functionResponse = availableFunctions[functionName](...Object.values(functionArgs));
+      } else {
+        functionResponse = { error: `Unknown function: ${functionName}` };
+      }
+
+      // Add tool response to conversation
+      messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(functionResponse)
+      });
+    }
+  }
+
+  console.log('Error: Maximum iterations reached without completion');
+}
+
+
+async function main() {
+  try {
+    await runWithOpenAI();
+} catch (error) {
+    console.error('Error:', error.message);
+}
+}
+
+main();

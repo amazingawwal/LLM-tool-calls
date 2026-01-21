@@ -18,7 +18,6 @@
   },
   "homepage": "https://github.com/amazingawwal/LLM-tool-calls#readme",
   "dependencies": {
-    "@openrouter/sdk": "^0.3.15",
     "dotenv": "^17.2.3",
     "openai": "^6.16.0"
   }

@@ -292,9 +292,30 @@ async function runWithOpenAI() {
       const functionArgs = JSON.parse(toolCall.function.arguments);
 
       
+     
       let functionResponse;
       if (availableFunctions[functionName]) {
-        functionResponse = availableFunctions[functionName](...Object.values(functionArgs));
+        
+        if (functionName === 'get_flight_schedule') {
+          functionResponse = availableFunctions[functionName](
+            functionArgs.origin,
+            functionArgs.destination
+          );
+        } else if (functionName === 'get_hotel_booking') {
+          functionResponse = availableFunctions[functionName](
+            functionArgs.city,
+            functionArgs.num_nights
+          );
+        } else if (functionName === 'convert_currency') {
+          functionResponse = availableFunctions[functionName](
+            functionArgs.amount,
+            functionArgs.from_currency,
+            functionArgs.to_currency
+          );
+        } else {
+          // Fallback to spread for unknown functions
+          functionResponse = availableFunctions[functionName](...Object.values(functionArgs));
+        }
       } else {
         functionResponse = { error: `Unknown function: ${functionName}` };
       }

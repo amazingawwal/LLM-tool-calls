@@ -1,8 +1,10 @@
+import "dotenv/config";
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
-dotenv.config();
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+
+
+const OPENROUTER_API_KEY = process.env.OPENAI_API_KEY;
 
 const LLM_MODEL_NAME = process.env.LLM_MODEL_NAME
 
@@ -250,7 +252,7 @@ async function runWithOpenAI() {
     baseURL: 'https://openrouter.ai/api/v1'
   });
 
-  const userPrompt = "I'm taking a flight from Lagos to Nairobi for a conference. I would like to know the total flight time back and forth, and the total cost of logistics for this conference if I'm staying for three days.";
+  const userPrompt = "I'm taking a flight from Lagos to Nairobi for a conference. I would like to know the total flight time back and forth, and the total cost of logistics in NGN for this conference if I'm staying for three days.";
 
   const messages = [{ role: 'user', content: userPrompt }];
 
